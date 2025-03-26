@@ -27,31 +27,26 @@
             z-index: 1000;
         }
 
-        /* Conteneur du message de démarrage */
-        .click-indicator {
+         /* Indicateur de clic */
+         .click-indicator {
             position: absolute;
             top: 0;
             left: 0;
-            transform: translate(0, 0);
-            text-align: center;
             pointer-events: none;
-            color: white;
-            font-size: 14px;
-            opacity: 0.8;
+            transform: translate(-50%, -50%);
         }
 
-        /* Cercle animé, taille réduite */
+        /* Cercle */
         .circle {
             width: 30px;
             height: 30px;
             background: #00A3FF;
             border-radius: 50%;
-            position: absolute;
+            position: relative;
             animation: pulse 1.5s infinite;
-            margin: 0;
         }
 
-        /* Effet d'onde autour */
+        /* Animation d'onde */
         .circle::before, .circle::after {
             content: "";
             position: absolute;
@@ -80,15 +75,15 @@
             100% { transform: translate(-50%, -50%) scale(2); opacity: 0; }
         }
 
-        /* Style du texte */
+        /* Texte */
         .click-text {
             color: white;
             font-size: 14px;
             opacity: 0.8;
             position: absolute;
-            margin-left: 10px;
-            top: 50%;
-            transform: translateY(-50%);
+            width: 100%;
+            text-align: center;
+            top: -25px; /* Ajustement pour qu'il soit bien au-dessus du cercle */
         }
     </style>
 </head>
@@ -102,18 +97,18 @@
 <!-- Message de démarrage -->
 <div class="click-indicator" id="click-indicator">
     <div class="circle"></div>
-    <div class="click-text">Click anywhere to start</div>
+    <div class="click-text">Click</div>
 </div>
 
 <script>
     let model;
     let zoomStage = 0;
-    let targetCameraPosition = { x: -3, y: 2, z: 6 };
+    let targetCameraPosition = { x: 3, y: 2, z: 6 };
     let cameraVelocity = { x: 0, y: 0, z: 0 };
 
     // Initialisation de la scène
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x808080); // Fond gris souris
+    scene.background = new THREE.Color(0x808080);
 
     // Caméra
     const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -122,7 +117,8 @@
     // Rendu
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.shadowMap.enabled = true;  // Activer les ombres
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     document.body.appendChild(renderer.domElement);
 
     // Lumières
@@ -130,37 +126,47 @@
     scene.add(ambientLight);
 
     const directionalLight = new THREE.DirectionalLight(0xffffff, 1.2);
-    directionalLight.position.set(2, 2, 5);
-    directionalLight.castShadow = true;  // Activer les ombres pour cette lumière
+    directionalLight.position.set(2, 5, 5); // Ajuste la position de la lumière pour mieux éclairer le modèle
+    directionalLight.castShadow = true;
+    directionalLight.shadow.mapSize.width = 2048; // Résolution de l'ombre
+    directionalLight.shadow.mapSize.height = 2048;
+    directionalLight.shadow.camera.near = 0.5;  // Proximité de la caméra d'ombre
+    directionalLight.shadow.camera.far = 50;    // Distance de la caméra d'ombre
     scene.add(directionalLight);
+
+    // Créer un plan pour recevoir l'ombre
+    const planeGeometry = new THREE.PlaneGeometry(1000, 1000);
+    const planeMaterial = new THREE.ShadowMaterial({ opacity: 0.5 });
+    const plane = new THREE.Mesh(planeGeometry, planeMaterial);
+    plane.rotation.x = - Math.PI / 2;
+    plane.position.y = -1;
+    plane.receiveShadow = true;
+    scene.add(plane);
 
     // Chargement du modèle GLB
     const loader = new THREE.GLTFLoader();
     loader.load('pc.glb', function(gltf) {
         model = gltf.scene;
         model.position.set(0, 0, 0);
-        model.castShadow = true;  // Activer les ombres pour le modèle
-        model.receiveShadow = true;  // Activer la réception des ombres pour le modèle
+        model.castShadow = true;
+        model.receiveShadow = true;
         scene.add(model);
-        
-        // Cacher l'écran de chargement après le chargement du modèle
         document.getElementById('loading-screen').style.display = 'none';
     }, undefined, function(error) {
         console.error('Erreur de chargement :', error);
     });
 
-    // Variables pour les mouvements de la souris
+    // Variables pour le mouvement de la souris
     let targetX = 0, targetY = 0;
     let currentX = 0, currentY = 0;
     const speed = 0.03;
 
-    // Fonction d'animation principale
+    // Animation principale
     function animate() {
         requestAnimationFrame(animate);
 
         if (model) {
             if (zoomStage === 1) {
-                // Premier zoom après clic (plus fluide avec interpolation)
                 targetCameraPosition.x += (0 - targetCameraPosition.x) * 0.08;
                 targetCameraPosition.y += (1.2 - targetCameraPosition.y) * 0.08;
                 targetCameraPosition.z += (1.5 - targetCameraPosition.z) * 0.08;
@@ -169,18 +175,19 @@
                     zoomStage = 2;
                 }
             } else if (zoomStage === 2) {
-                // Deuxième zoom après clic
                 targetCameraPosition.z += (0.5 - targetCameraPosition.z) * 0.08;
                 targetCameraPosition.x += (0.09 - targetCameraPosition.x) * 0.08;
                 targetCameraPosition.y += (1.0 - targetCameraPosition.y) * 0.08;
+            } else if (zoomStage === 0) {
+                targetCameraPosition.x += (3 - targetCameraPosition.x) * 0.08;
+                targetCameraPosition.y += (2 - targetCameraPosition.y) * 0.08;
+                targetCameraPosition.z += (6 - targetCameraPosition.z) * 0.08;
             }
 
-            // Lissage des mouvements de la caméra avec interpolation
             camera.position.x += (targetCameraPosition.x - camera.position.x) * 0.1;
             camera.position.y += (targetCameraPosition.y - camera.position.y) * 0.1;
             camera.position.z += (targetCameraPosition.z - camera.position.z) * 0.1;
 
-            // Lissage des mouvements du modèle
             currentX += (targetX - currentX) * speed;
             currentY += (targetY - currentY) * speed;
 
@@ -192,35 +199,30 @@
     }
     animate();
 
-    // Gestion du mouvement de la souris
+    // Suivi de la souris pour le texte et le cercle
+    const clickIndicator = document.getElementById("click-indicator");
+
     window.addEventListener("mousemove", (event) => {
-        const x = (event.clientX / window.innerWidth) * 2 - 1;
-        const y = (event.clientY / window.innerHeight) * 2 - 1;
-        targetX = x * 0.4;
-        targetY = -y * 0.15;
+        const x = event.clientX;
+        const y = event.clientY;
 
-        // Suivre la souris avec le cercle et le texte
-        const circle = document.querySelector('.circle');
-        const clickText = document.querySelector('.click-text');
-        const circleX = event.clientX - circle.offsetWidth / 2;
-        const circleY = event.clientY - circle.offsetHeight / 2;
-
-        // Déplacer le cercle
-        circle.style.left = `${circleX}px`;
-        circle.style.top = `${circleY}px`;
-
-        // Déplacer le texte avec le cercle, juste à côté
-        clickText.style.left = `${circleX + circle.offsetWidth + 10}px`;  // Décalage à droite du cercle
-        clickText.style.top = `${circleY + (circle.offsetHeight / 2) - (clickText.offsetHeight / 2)}px`; // Centré verticalement
+        // Positionnement centré sur le curseur
+        clickIndicator.style.left = `${x}px`;
+        clickIndicator.style.top = `${y}px`;
     });
 
-    // Clic pour démarrer le zoom
+    // Clic pour cacher l'indicateur
     window.addEventListener("click", () => {
+        clickIndicator.style.display = "none";
+
+        // Clic pour démarrer ou réinitialiser le zoom
         if (zoomStage === 0) {
-            zoomStage = 1;  // Démarrer le zoom après clic
-            document.getElementById("click-indicator").style.display = "none"; // Cache le message de démarrage
+            zoomStage = 1;
         } else if (zoomStage === 1) {
-            zoomStage = 2;  // Passe au zoom suivant
+            zoomStage = 2;
+        } else if (zoomStage === 2) {
+            zoomStage = 0; // Retour au zoom initial
+            targetCameraPosition = { x: 3, y: 2, z: 6 }; // Réinitialiser la position de la caméra
         }
     });
 
