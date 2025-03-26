@@ -1,0 +1,81 @@
+body {
+    margin: 0;
+    overflow: hidden;
+    background-color: #202020;
+    font-family: 'Press Start 2P', cursive;  /* Utilisation de la police Pokémon */
+}
+
+/* Centrage du bouton en bas */
+#pokebutton-container {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+/* Style du bouton avec un contour de texte */
+#zoom-button {
+    padding: 15px 30px;
+    font-size: 35px;
+    font-family: 'Press Start 2P', cursive;  /* Police Pokémon */
+    background-color: #ffcc0000; /* Couleur jaune pour ressembler à un Pokéball */
+    color: #fff;
+    border: 5px solid #f4433600; /* Bordure rouge (couleur du Pokéball) */
+    border-radius: 50px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    outline: none;
+
+    /* Contour de texte rouge et jaune */
+    text-shadow: 
+        1px 1px 2px #f44336,  /* Contour rouge léger */
+        -1px -1px 2px #f44336,  /* Contour rouge de l'autre côté */
+        2px 2px 2px #ffcc00,  /* Contour jaune léger */
+        -2px -2px 2px #ffcc00; /* Contour jaune de l'autre côté */
+}
+
+/* Effet hover sur le bouton */
+#zoom-button:hover {
+    background-color: #ff5722;  /* Couleur rouge pour le hover */
+    box-shadow: 0 0 25px rgba(244, 67, 54, 1);  /* Ombre dynamique */
+}
+
+/* Style du Pokédex */
+#pokedex {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    width: 300px;
+    text-align: center;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+/* Titre et description du Pokédex */
+#pokedex h2 {
+    font-size: 20px;
+    font-family: 'Press Start 2P', cursive;
+}
+
+#pokedex p {
+    font-size: 14px;
+    margin-bottom: 20px;
+}
+
+#close-pokedex {
+    padding: 10px 20px;
+    background-color: #e74c3c;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+#close-pokedex:hover {
+    background-color: #c0392b;
+}
